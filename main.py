@@ -18,11 +18,10 @@ def main():
         pesoLimite = T[i]
         tmpMaxProfit, M = mochila(copyG, copyV, pesoLimite)
         maxProfit += tmpMaxProfit
-        lstItens = getIncludedItens(M, len(copyG), pesoLimite)
-        #print(lstItens)
+        lstItens = getIncludedItens(M, copyG, pesoLimite)
         lstAllItens.extend(lstItens)
-        copyG = removeValueFromUsedItem(copyG, list(lstItens))
-        copyV = removeValueFromUsedItem(copyV, list(lstItens))
+        copyG = removeValueFromUsedItem(copyG, list(lstItens), True)
+        copyV = removeValueFromUsedItem(copyV, list(lstItens), False)
     #print('Itens incluidos: ')
     #print(lstAllItens)
     #print('valor máximo: '+str(maxProfit))
@@ -30,35 +29,46 @@ def main():
     print(getNotIncludedItens(copyG))
     print('Lucro perdido: ' + str(sum(copyV)))
 
-def removeValueFromUsedItem(lstAllItens, lstIncludedItem):
+#lstAllItens: todos os itens do problema;
+#lstIncludedItem: itens já incluidos no caminhião;
+#weight boolean para verificar se é valor ou peso para preencher
+def removeValueFromUsedItem(lstAllItens, lstIncludedItem, weight):
     for i in lstIncludedItem:
-        lstAllItens[i] = 0
+        if(weight):
+            lstAllItens[i] = 9999
+        else:
+            lstAllItens[i] = 0
     return lstAllItens
 
+#Verifica quais itens não foram enviados baseado em seu peso, colocado método removeValueFromUsedItem
 def getNotIncludedItens(lstAllItens):
     lstNotIncluded = []
     for i in range( len( lstAllItens ) ):
-        if( lstAllItens[i] != 0 ):
+        if( lstAllItens[i] != 9999 ):
             lstNotIncluded.append(i)
     return lstNotIncluded
 
-def getIncludedItens(M, n, pesoLimite):
-    i = n
+#Pega os itens adicionados no caminhão, baseado na mudança do seu valor entre cada linha da matriz,
+#A diferença no valor da linha reflete que foi adicionado o item
+def getIncludedItens(M, G, pesoLimite):
+    i = len(G)
     j = pesoLimite
     lstIncludedItem = []
-    while( i > 0 and j >0 ):
-        if(M[i][j] != M[i-1][j]):
-            lstIncludedItem.append(i-1)
-            j = j-i
+    while( i > 0 and j > 0 ):
+        correctIndex = i - 1
+        if(M[i][j] != M[correctIndex][j]):
+            lstIncludedItem.append(correctIndex)
+            j -= G[correctIndex]
             i -=1
         else:
             i -=1
     return lstIncludedItem
 
+#algoritmo da mochila, baseado no algoritmo 41, da página 138 das anotações da disciplina
 def mochila(itens, valor, W):
     n = len(itens)
     M = [[0 for x in range(W+1)] for x in range(n+1)]
-    lstItens = []
+
     for i in range( n+1 ):
         for w in range( W+1 ):
             a = M[i-1][w]
